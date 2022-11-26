@@ -9,6 +9,21 @@
 
 ****
 
+
+오류 분석하기 (오류나는 건에 대해서 데이터 탐색)
+-> 과적합 
+
+train에만 있고 test에는 없는 변수로 파생변수 생성 
+-> ??
+
+id변수 찾기
+-> ??
+
+outlier 변수
+(수치형변수 - 평균) 평균대비 1년에 몇번이나 수치가 올라갔는가?
+
+****
+
 ID : ID<br>
 COMPONENT_ARBITRARY : sample 오일 관련 부품 (Component 4종)<br>
 ANONYMOUS_1 : 무명 Feature 1, 수치형 데이터<br>
