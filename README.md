@@ -1,4 +1,4 @@
-====
+****
 
 변수중요도높은변수 = ['V40','FE','ZN','CU'] # 변수중요도 높은 원소들 <br>
 타겟과음의상관관계 = ['ZN','H2O'] # 타겟과 마이너스 상관관계 <br>
@@ -7,7 +7,7 @@
 제로비율이절반변수 = ['CR','MN','MO']<br>
 제로비율이낮은변수 = ['ANONYMOUS_1','ANONYMOUS_2','PQINDEX ','V40','FE','ZN','CU']<br>
 
-====
+****
 
 ID : ID<br>
 COMPONENT_ARBITRARY : sample 오일 관련 부품 (Component 4종)<br>
