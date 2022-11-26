@@ -38,7 +38,7 @@ for c1, c2, c3 in [i for i in itertools.combinations(group_features,3)]:
     test[new_c] = np.where(test[new_c].isin(others),'others',test[new_c])
     
     
-   """
+"""
 make psudo id2 (중앙값보다 높은거)
 """
 
