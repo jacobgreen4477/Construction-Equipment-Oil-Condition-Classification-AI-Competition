@@ -1,4 +1,3 @@
-```
 
 """
 psudo_id1
@@ -53,4 +52,3 @@ test['psudo_id2'] = np.where(test['psudo_id2'].isin(others),'others',test['psudo
 print('# of element:',len(train['psudo_id2'].value_counts()))
 
 
-```
