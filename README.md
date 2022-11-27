@@ -1,3 +1,31 @@
+
+Fold  1 AUC : 0.713411
+Fold  2 AUC : 0.680495
+Fold  3 AUC : 0.708398
+Fold  4 AUC : 0.704861
+Fold  5 AUC : 0.714853
+Full AUC score 0.704186
+
+feature
+ANONYMOUS_1_ANONYMOUS_2_div                                  113
+FE_divide_FE_FE_woe_bin_median                               109
+CU_divide_CU_YEAR_sum                                         96
+ZN_minus_ZN_YEAR_median                                       89
+YEAR_COMPONENT                                                83
+CR_ANONYMOUS_1_plus                                           69
+ANONYMOUS_1_ZN_divide_ANONYMOUS_1_ZN_YEAR_COMPONENT_max       66
+ANONYMOUS_1_V40_divide_ANONYMOUS_1_V40_YEAR_sum               65
+ANONYMOUS_2_NI_div                                            65
+ZN_CR_div                                                     64
+ANONYMOUS_1_ZN_divide_ANONYMOUS_1_ZN_YEAR_sum                 64
+ANONYMOUS_1_MO_div                                            64
+ANONYMOUS_1_NI_plus                                           63
+ANONYMOUS_1_CU_plus                                           60
+ANONYMOUS_1_CU_minus                                          53
+ANONYMOUS_1_TI_plus                                           52
+
+****
+
 변수 생성 절차 
 1. numeric combination feature 맨 처음에 실행
 2. id, categorical combination feature 두번째로 실행 
