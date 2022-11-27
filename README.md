@@ -1,3 +1,11 @@
+변수선택
+
+1. 상관관계 0.99 이상 제거 
+2. n unique count 30 아래 제거 
+3. psudo feature 만들어서, cv=5 vi가 psudo feature보다 아래인 변수 제거 
+
+****
+
 수치가 평균보다 낮을수록
 불량기계건수가 증가 
 
