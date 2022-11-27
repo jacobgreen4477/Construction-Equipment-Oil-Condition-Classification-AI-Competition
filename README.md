@@ -1,3 +1,10 @@
+변수 생성 절차 
+1. numeric combination feature 맨 처음에 실행
+2. id, categorical combination feature 두번째로 실행 
+3. group operations 맨 마지막에 실행 
+
+****
+
 변수선택
 
 1. 상관관계 0.99 이상 제거 
