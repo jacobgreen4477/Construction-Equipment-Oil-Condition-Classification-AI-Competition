@@ -1,7 +1,7 @@
 from DMS_202211 import common
 from DMS_202211.seed_everything import seed_everything
 
-def diff_feature(df):
+def diff_feature(df,num_features):
     diff_num_features = [f'diff_{col}' for col in num_features]
     cids = df['YEAR'].values
     df = df.groupby('YEAR')[num_features].diff().add_prefix('diff_')
