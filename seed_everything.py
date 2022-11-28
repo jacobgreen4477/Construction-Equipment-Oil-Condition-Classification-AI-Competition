@@ -1,3 +1,5 @@
+import warnings
+warnings.simplefilter('ignore')
 
 import random 
 import os
