@@ -44,7 +44,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 pd.set_option('display.max_rows', 500)
 from DMS_202211.seed_everything import seed_everything
 
-def permutation_vi(train, best_params):
+def permutation_vi(train, best_params, n_iter=60):
     
     params = {'application':'binary', 'metric':'auc'}
     params['learning_rate'] = max(min(best_params['learning_rate'], 1), 0)
@@ -102,7 +102,7 @@ def permutation_vi(train, best_params):
             )    
             
         # scoring = 'f1'
-        perm = PermutationImportance(clf, n_iter=60, scoring='roc_auc',random_state=1).fit(train_df.loc[valid_idx, FEATURES],train_df.loc[valid_idx, TARGET_COL])
+        perm = PermutationImportance(clf, n_iter=n_iter, scoring='roc_auc',random_state=1).fit(train_df.loc[valid_idx, FEATURES],train_df.loc[valid_idx, TARGET_COL])
         fold_importance_df = eli5.explain_weights_df(perm, top = len(FEATURES), feature_names = FEATURES)
         fold_importance_df["fold"] = fold + 1
         feature_importance_df = pd.concat([feature_importance_df, fold_importance_df], axis=0)
