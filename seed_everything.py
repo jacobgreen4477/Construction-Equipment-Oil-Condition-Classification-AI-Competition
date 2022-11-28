@@ -1,6 +1,9 @@
+import random 
+import os
+import np
+import torch
+
 def seed_everything(seed):
-    
-    import random 
     
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
