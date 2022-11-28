@@ -1,4 +1,4 @@
-from DMS_202211.common import common
+from DMS_202211 import common
 from DMS_202211.seed_everything import seed_everything
 
 def train_model(train,test,params,stratified,num_folds,drop_features,seed_num=1):
