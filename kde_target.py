@@ -1,4 +1,6 @@
-# Plots the disribution of a variable colored by value of the target
+from DMS_202211.common import common
+from DMS_202211.seed_everything import seed_everything
+
 def kde_target(var_name, df):
     
     # Calculate the correlation coefficient between the new variable and the target
