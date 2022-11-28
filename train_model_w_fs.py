@@ -37,6 +37,7 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 pd.set_option('display.max_rows', 500)
+from DMS_202211.seed_everything import seed_everything
 
 def train_model_w_fs(train,test,params,stratified,num_folds,drop_features,seed_num,score_diff_thred=0.001,drop_size=1):
     
