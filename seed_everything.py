@@ -3,7 +3,7 @@ warnings.simplefilter('ignore')
 
 import random 
 import os
-import np
+import numpy as np
 import torch
 
 def seed_everything(seed_num):
