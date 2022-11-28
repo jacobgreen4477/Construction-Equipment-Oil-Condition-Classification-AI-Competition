@@ -103,7 +103,7 @@ def train_model(train,test,params,stratified,num_folds,drop_features,seed_num=1)
             min_child_samples = int(round(params['min_child_samples'])),    
             
             n_jobs = -1,
-            n_estimators = 10000,            
+            n_estimators = 100000,            
             random_state = seed_num,
             silent=-1,
             deterministic=True,
@@ -120,7 +120,7 @@ def train_model(train,test,params,stratified,num_folds,drop_features,seed_num=1)
                 , eval_set=[(train_x, train_y), (valid_x, valid_y)]
                 , eval_metric= 'auc'
                 , verbose= 200
-                , early_stopping_rounds= 500
+                , early_stopping_rounds= 700
             )
 
         oof_preds_lgb[valid_idx] = clf.predict_proba(valid_x, num_iteration=clf.best_iteration_)[:, 1]
