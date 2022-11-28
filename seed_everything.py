@@ -3,12 +3,12 @@ import os
 import np
 import torch
 
-def seed_everything(seed):
+def seed_everything(seed_num):
     
-    random.seed(seed)
-    os.environ['PYTHONHASHSEED'] = str(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
+    random.seed(seed_num)
+    os.environ['PYTHONHASHSEED'] = str(seed_num)
+    np.random.seed(seed_num)
+    torch.manual_seed(seed_num)
+    torch.cuda.manual_seed(seed_num)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = True
