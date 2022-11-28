@@ -1,4 +1,4 @@
-from DMS_202211.common import common
+from DMS_202211 import common
 from DMS_202211.seed_everything import seed_everything
 
 def permutation_lgb_vi(train, params, drop_features):
