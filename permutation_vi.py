@@ -39,7 +39,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 pd.set_option('display.max_rows', 500)
 from DMS_202211.seed_everything import seed_everything
 
-def permutation_vi(train, params):
+def permutation_vi(train, best_params):
     
     params = {'application':'binary', 'metric':'auc'}
     params['learning_rate'] = max(min(best_params['learning_rate'], 1), 0)
