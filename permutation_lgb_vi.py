@@ -39,6 +39,55 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 pd.set_option('display.max_rows', 500)
 from DMS_202211.seed_everything import seed_everything
 
+%%time 
+
+# """
+# permutation importance
+# """
+
+# # CPU times: user 30min 55s, sys: 2.93 s, total: 30min 58s
+# # Wall time: 8min 45s
+
+# params =  {
+#     'learning_rate': 0.07398,
+#     'max_depth': 4.309,
+#     'colsample_bytree': 0.4028,
+#     'subsample': 0.4278,
+#     'min_child_samples': 25.65,
+#     'min_child_weight': 0.6138,
+#     'min_split_gain': 0.7354,
+#     'num_leaves': 62.68,
+#     'reg_alpha': 0.2889,
+#     'reg_lambda': 7.875,
+
+# }
+
+# permutation_importance_df = permutation_vi(train, params, n_iter=30)
+
+# # save
+# permutation_importance_df.to_csv('permutation_importance_df.csv',index=False)
+
+# # check 
+# a1 = (permutation_importance_df.loc[permutation_importance_df['weight']<0,'feature'].value_counts()>=4)
+# drop_features_vc4 = a1.index[a1].tolist()
+# print('drop_features_vc4:',len(drop_features_vc4))
+
+# a1 = (permutation_importance_df.loc[permutation_importance_df['weight']<0,'feature'].value_counts()>=3)
+# drop_features_vc3 = a1.index[a1].tolist()
+# print('drop_features_vc3:',len(drop_features_vc3))
+
+# a1 = (permutation_importance_df.loc[permutation_importance_df['weight']<0,'feature'].value_counts()>=2)
+# drop_features_vc2 = a1.index[a1].tolist()
+# print('drop_features_vc2:',len(drop_features_vc2))
+
+# # check 
+# print('drop_features_vc2=',drop_features_vc2)
+# print('drop_features_vc3=',drop_features_vc3)
+# print('drop_features_vc4=',drop_features_vc4)
+
+# # set drop_features
+# drop_features = drop_features_vc2
+
 def permutation_lgb_vi(train, params, drop_features):
     
     params = {'application':'binary', 'metric':'auc'}
