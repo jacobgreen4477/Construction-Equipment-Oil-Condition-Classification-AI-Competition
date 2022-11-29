@@ -39,7 +39,6 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 pd.set_option('display.max_rows', 500)
 from DMS_202211.seed_everything import seed_everything
 
-
 # """
 # baseline model 
 # """
@@ -75,6 +74,7 @@ from DMS_202211.seed_everything import seed_everything
 # }
 
 # train_model_lgb_classifier_w_f1(train,test,params,True,5,drop_features_vc2,seed_num=11)
+
 
 def train_model_lgb_classifier_w_f1(train,test,params,stratified,num_folds,drop_features,seed_num):
     
