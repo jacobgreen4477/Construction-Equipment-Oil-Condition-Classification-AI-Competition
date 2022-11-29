@@ -114,6 +114,16 @@ def train_model_lgb_classifier_w_f1(train,test,params,stratified,num_folds,drop_
     feats = [f for f in train_df.columns if f not in ['Y_LABEL','ID','SAMPLE_TRANSFER_DAY']+drop_features]
     
     params['random_state'] = seed_num
+    params['learning_rate'] = max(min(params['learning_rate'], 1), 0)
+    params["num_leaves"] = int(round(params['num_leaves']))
+    params['colsample_bytree'] = max(min(params['colsample_bytree'], 1), 0)
+    params['subsample'] = max(min(params['subsample'], 1), 0)
+    params['max_depth'] = int(round(params['max_depth']))        
+    params['reg_alpha'] = params['reg_alpha']
+    params['reg_lambda'] = params['reg_lambda']        
+    params['min_split_gain'] = params['min_split_gain']
+    params['min_child_weight'] = params['min_child_weight']
+    params['min_child_samples'] = int(round(params['min_child_samples']))   
     
     def f1_eval(yhat,data):
     
