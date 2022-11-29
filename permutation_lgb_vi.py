@@ -39,7 +39,6 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 pd.set_option('display.max_rows', 500)
 from DMS_202211.seed_everything import seed_everything
 
-%%time 
 
 # """
 # permutation importance
