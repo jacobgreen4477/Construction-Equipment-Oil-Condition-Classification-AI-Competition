@@ -1,3 +1,93 @@
+import joblib
+import numpy as np
+import pandas as pd
+import gc
+import time
+import os
+import sys
+from contextlib import contextmanager
+from lightgbm import LGBMClassifier
+import lightgbm as lgb
+import xgboost as xgb
+from xgboost import XGBClassifier
+from sklearn.metrics import roc_auc_score, roc_curve, f1_score
+from sklearn.model_selection import KFold, StratifiedKFold, train_test_split, cross_val_score
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import StandardScaler
+from bayes_opt import BayesianOptimization
+from skopt import BayesSearchCV 
+from optbinning import OptimalBinning
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import MinMaxScaler
+from yellowbrick.cluster import KElbowVisualizer
+from scipy.cluster.hierarchy import linkage
+from scipy.cluster.hierarchy import dendrogram
+from sklearn.decomposition import PCA
+import random
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.optim as optim
+from torch.utils.data import DataLoader, Dataset
+from tqdm.auto import tqdm
+import random
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
+
+pd.set_option('display.max_rows', 500)
+from DMS_202211.seed_everything import seed_everything
+
+"""
+# find best_seed
+# """
+
+# drop_features_vc2= ['ZN_MO_plus', 'MO_minus_MO_YEAR_max', 'FE_divide_FE_psudo_id2_YEAR_sum', 'FE_divide_FE_YEAR_COMPONENT_median', 'V40_minus_V40_YEAR_COMPONENT_min', 'ANONYMOUS_1_minus_ANONYMOUS_1_psudo_id2_YEAR_COMPONENT_max', 'CU_NI_logdiff', 'ZN_minus_ZN_YEAR_COMPONENT_median', 'ZN_ANONYMOUS_1_div', 'FE_minus_FE_psudo_id2_YEAR_COMPONENT_median', 'V40_minus_V40_psudo_id2_YEAR_COMPONENT_min', 'ANONYMOUS_1_V40_mul', 'FE_divide_FE_YEAR_median', 'V40_minus_V40_psudo_id2_median', 'PQINDEX_mul_ZN', 'CR_MN_div', 'ZN_psudo_id2_YEAR_max', 'H2O_divide_H2O_YEAR_max', 'CU_divide_CU_psudo_id2_YEAR_COMPONENT_sum', 'PQINDEX_NI_div', 'ZN_minus_ZN_psudo_id2_YEAR_COMPONENT_min', 'CU_NI_div', 'PQINDEX_divide_PQINDEX_psudo_id2_YEAR_COMPONENT_sum', 'ZN_psudo_id2_YEAR_sum', 'FE_NI_minus', 'PQINDEX_divide_PQINDEX_YEAR_COMPONENT_max', 'V40_MN_div', 'ANONYMOUS_1_V40_div', 'FE_divide_FE_YEAR_sum', 'ANONYMOUS_1_NI_plus', 'ZN_minus_ZN_YEAR_COMPONENT_min', 'PQINDEX_divide_PQINDEX_YEAR_sum', 'ZN_AG_minus', 'MN_divide_MN_YEAR_COMPONENT_sum', 'FE_divide_FE_YEAR_COMPONENT_sum', 'ANONYMOUS_1_minus_ANONYMOUS_1_psudo_id2_YEAR_COMPONENT_median', 'ANONYMOUS_1_MO_div', 'ANONYMOUS_2_divide_ANONYMOUS_2_psudo_id2_YEAR_median', 'PQINDEX_divide_PQINDEX_YEAR_max', 'FE_NI_mul', 'ZN_minus_ZN_psudo_id2_YEAR_COMPONENT_max', 'MO_divide_MO_YEAR_max', 'ANONYMOUS_1_divide_ANONYMOUS_1_psudo_id2_median', 'FE_divide_FE_YEAR_COMPONENT_max', 'ANONYMOUS_2_divide_ANONYMOUS_2_YEAR_COMPONENT_max', 'ANONYMOUS_1_divide_ANONYMOUS_1_psudo_id2_YEAR_COMPONENT_median', 'AG_divide_AG_YEAR_COMPONENT_sum', 'V40_ANONYMOUS_2_plus', 'ANONYMOUS_1_NI_div', 'V40_divide_V40_YEAR_sum', 'ZN_FE_mul', 'NI_mul_ZN', 'ANONYMOUS_2_psudo_id2_YEAR_median', 'PQINDEX_divide_PQINDEX_psudo_id2_median', 'PQINDEX_ANONYMOUS_2_plus', 'FE_divide_FE_YEAR_COMPONENT_min', 'PQINDEX_divide_PQINDEX_psudo_id2_YEAR_min', 'CU_NI_minus', 'V40_divide_V40_YEAR_median', 'V40_MO_div', 'PQINDEX_FE_div', 'V40_CO_div', 'ZN_ANONYMOUS_1_mul', 'ANONYMOUS_1_divide_ANONYMOUS_1_YEAR_COMPONENT_sum', 'ZN_minus_ZN_psudo_id2_YEAR_median', 'V40_divide_V40_psudo_id2_min', 'V40_psudo_id2_YEAR_COMPONENT_max', 'CR_divide_CR_YEAR_COMPONENT_max', 'V40_divide_V40_YEAR_min', 'ZN_divide_ZN_YEAR_COMPONENT_max', 'ANONYMOUS_1_divide_ANONYMOUS_1_psudo_id2_sum', 'ZN_ANONYMOUS_2_plus', 'ZN_minus_ZN_psudo_id2_max', 'ANONYMOUS_1_divide_ANONYMOUS_1_psudo_id2_YEAR_COMPONENT_min', 'FE_divide_FE_psudo_id2_median', 'ANONYMOUS_2_divide_ANONYMOUS_2_psudo_id2_YEAR_COMPONENT_median', 'PQINDEX_minus_PQINDEX_psudo_id2_YEAR_COMPONENT_max', 'PQINDEX_divide_PQINDEX_YEAR_COMPONENT_sum', 'V_PQINDEX_minus', 'PQINDEX_divide_PQINDEX_psudo_id2_YEAR_median', 'PQINDEX_minus_PQINDEX_YEAR_COMPONENT_max', 'ANONYMOUS_2_YEAR_COMPONENT_sum', 'ANONYMOUS_1_H2O_plus', 'ANONYMOUS_2_psudo_id2_YEAR_sum', 'ANONYMOUS_1_psudo_id2_YEAR_max', 'CR_ANONYMOUS_1_mul', 'ZN_PQINDEX_div', 'V40_divide_V40_psudo_id2_YEAR_min', 'MO_psudo_id2_YEAR_max', 'V40_CU_div', 'MN_divide_MN_psudo_id2_sum', 'TI_V40_plus', 'ANONYMOUS_1_PQINDEX_plus', 'PQINDEX_minus_PQINDEX_YEAR_max', 'ANONYMOUS_1_CO_minus', 'V40_FE_plus', 'ANONYMOUS_1_log1', 'V40_PQINDEX_div', 'FE_mul_ZN', 'ZN_divide_ZN_psudo_id2_YEAR_COMPONENT_max', 'ZN_ANONYMOUS_2_div', 'CR_CU_minus', 'CR_divide_CR_psudo_id2_YEAR_COMPONENT_sum', 'MN_divide_MN_psudo_id2_YEAR_max', 'V40_CU_minus', 'ANONYMOUS_1_divide_ANONYMOUS_1_psudo_id2_YEAR_median', 'ANONYMOUS_1_CU_plus', 'V40_divide_V40_YEAR_COMPONENT_min', 'FE_NI_div', 'CO_FE_minus', 'ANONYMOUS_1_MN_plus', 'CU_divide_CU_YEAR_COMPONENT_sum', 'ZN_minus_ZN_psudo_id2_YEAR_max', 'ZN_divide_ZN_psudo_id2_max', 'FE_divide_FE_psudo_id2_YEAR_COMPONENT_median', 'CR_NI_minus', 'MO_divide_MO_psudo_id2_YEAR_COMPONENT_max', 'ANONYMOUS_1_psudo_id2_YEAR_COMPONENT_sum', 'ANONYMOUS_2_divide_ANONYMOUS_2_psudo_id2_YEAR_COMPONENT_sum', 'V_CU_plus', 'MO_minus_MO_YEAR_COMPONENT_median', 'CU_minus_CU_psudo_id2_YEAR_COMPONENT_median', 'FE_psudo_id2_YEAR_median', 'ANONYMOUS_1_CU_div', 'ZN_CR_div', 'PQINDEX_psudo_id2_YEAR_COMPONENT_min', 'NI_divide_NI_psudo_id2_YEAR_COMPONENT_sum', 'ANONYMOUS_1_MN_minus', 'ANONYMOUS_1_psudo_id2_YEAR_COMPONENT_median', 'CR_ANONYMOUS_2_minus', 'FE_divide_FE_psudo_id2_YEAR_max', 'ANONYMOUS_1_divide_ANONYMOUS_1_psudo_id2_YEAR_COMPONENT_sum', 'ANONYMOUS_1_FE_plus', 'FE_divide_FE_psudo_id2_YEAR_COMPONENT_sum', 'ZN_minus_ZN_psudo_id2_YEAR_COMPONENT_median', 'cluster_no_by_ANONYMOUS_2_mean', 'ANONYMOUS_1_TI_minus', 'MO_divide_MO_YEAR_COMPONENT_sum', 'ANONYMOUS_2_psudo_id2_YEAR_max', 'ANONYMOUS_2_NI_mul', 'ANONYMOUS_1_minus_ANONYMOUS_1_psudo_id2_YEAR_max', 'ZN_psudo_id2_YEAR_median', 'V40_divide_V40_psudo_id2_YEAR_COMPONENT_median']
+# drop_features_vc3= ['ZN_MO_plus', 'MO_minus_MO_YEAR_max', 'FE_divide_FE_psudo_id2_YEAR_sum', 'FE_divide_FE_YEAR_COMPONENT_median', 'V40_minus_V40_YEAR_COMPONENT_min', 'ANONYMOUS_1_minus_ANONYMOUS_1_psudo_id2_YEAR_COMPONENT_max', 'CU_NI_logdiff', 'ZN_minus_ZN_YEAR_COMPONENT_median', 'ZN_ANONYMOUS_1_div', 'FE_minus_FE_psudo_id2_YEAR_COMPONENT_median', 'V40_minus_V40_psudo_id2_YEAR_COMPONENT_min', 'ANONYMOUS_1_V40_mul', 'FE_divide_FE_YEAR_median', 'V40_minus_V40_psudo_id2_median', 'PQINDEX_mul_ZN', 'CR_MN_div', 'ZN_psudo_id2_YEAR_max', 'H2O_divide_H2O_YEAR_max', 'CU_divide_CU_psudo_id2_YEAR_COMPONENT_sum', 'PQINDEX_NI_div', 'ZN_minus_ZN_psudo_id2_YEAR_COMPONENT_min', 'CU_NI_div', 'PQINDEX_divide_PQINDEX_psudo_id2_YEAR_COMPONENT_sum', 'ZN_psudo_id2_YEAR_sum', 'FE_NI_minus', 'PQINDEX_divide_PQINDEX_YEAR_COMPONENT_max', 'V40_MN_div', 'ANONYMOUS_1_V40_div', 'FE_divide_FE_YEAR_sum', 'ANONYMOUS_1_NI_plus', 'ZN_minus_ZN_YEAR_COMPONENT_min', 'PQINDEX_divide_PQINDEX_YEAR_sum', 'ZN_AG_minus', 'MN_divide_MN_YEAR_COMPONENT_sum', 'FE_divide_FE_YEAR_COMPONENT_sum', 'ANONYMOUS_1_minus_ANONYMOUS_1_psudo_id2_YEAR_COMPONENT_median', 'ANONYMOUS_1_MO_div', 'ANONYMOUS_2_divide_ANONYMOUS_2_psudo_id2_YEAR_median']
+# drop_features_vc4= ['ZN_MO_plus', 'MO_minus_MO_YEAR_max', 'FE_divide_FE_psudo_id2_YEAR_sum', 'FE_divide_FE_YEAR_COMPONENT_median', 'V40_minus_V40_YEAR_COMPONENT_min', 'ANONYMOUS_1_minus_ANONYMOUS_1_psudo_id2_YEAR_COMPONENT_max', 'CU_NI_logdiff', 'ZN_minus_ZN_YEAR_COMPONENT_median']
+
+# print('drop_features:',len(drop_features_vc2))
+
+# params = {
+    
+#     'task': 'train', 
+#     'boosting_type': 'gbdt', 
+#     'objective': 'binary', 
+#     'metric': 'auc', 
+    
+#     'num_iteration': 5000, 
+#     'early_stopping_rounds': 200,
+#     'verbose': -1 ,    
+    
+#     'learning_rate': 0.07398,
+#     'max_depth': 4,
+#     'colsample_bytree': 0.4028,
+#     'subsample': 0.4278,
+#     'min_child_samples': 26,
+#     'min_child_weight': 0.6138,
+#     'min_split_gain': 0.7354,
+#     'num_leaves': 62,
+#     'reg_alpha': 0.2889,
+#     'reg_lambda': 7.875
+    
+# }
+    
+# rst = []
+# for i in range(10):
+#     seed_num = i+1
+#     a1 = find_best_seed_f1(train,test,params,True,5,drop_features_vc2,seed_num=seed_num)
+#     rst.append(a1)
+    
+# seed_dt = pd.DataFrame(rst)
+# seed_dt['seed_num'] =  seed_dt.apply(lambda x: x['seed_num'][0],axis=1)
+# seed_dt['auc'] =  seed_dt.apply(lambda x: x['auc'][0],axis=1)
+# seed_dt.to_csv('./seed_dt.csv',index=False)
+
+# # best seed
+# best_seed = seed_dt.loc[seed_dt['auc']==seed_dt['auc'].max(),'seed_num'].tolist()[0]
+# print(best_seed)
+
 def find_best_seed_f1(train,test,params,stratified,num_folds,drop_features,seed_num):
         
     # start log 
