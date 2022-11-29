@@ -39,7 +39,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 pd.set_option('display.max_rows', 500)
 from DMS_202211.seed_everything import seed_everything
 
-"""
+# """
 # find best_seed
 # """
 
@@ -74,19 +74,22 @@ from DMS_202211.seed_everything import seed_everything
 # }
     
 # rst = []
-# for i in range(10):
+# for i in range(2):
 #     seed_num = i+1
 #     a1 = find_best_seed_f1(train,test,params,True,5,drop_features_vc2,seed_num=seed_num)
 #     rst.append(a1)
     
 # seed_dt = pd.DataFrame(rst)
-# seed_dt['seed_num'] =  seed_dt.apply(lambda x: x['seed_num'][0],axis=1)
-# seed_dt['auc'] =  seed_dt.apply(lambda x: x['auc'][0],axis=1)
 # seed_dt.to_csv('./seed_dt.csv',index=False)
 
 # # best seed
-# best_seed = seed_dt.loc[seed_dt['auc']==seed_dt['auc'].max(),'seed_num'].tolist()[0]
-# print(best_seed)
+# a1 = seed_dt.loc[(seed_dt['target_sum']>500) & (seed_dt['target_sum']<580),:].copy()
+# a1 = a1.loc[a1['f1']==a1['f1'].max(),:]
+# a1 = a1.loc[a1['auc']==a1['auc'].max(),:]
+# display(a1)
+# a1 = a1.head(1)
+# best_seed = a1['seed_num'].to_list()[0]
+# print('best_seed:',best_seed)
 
 def find_best_seed_f1(train,test,params,stratified,num_folds,drop_features,seed_num):
         
