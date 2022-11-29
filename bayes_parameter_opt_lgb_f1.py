@@ -202,12 +202,26 @@ def bayes_parameter_opt_lgb_f1(
                 )
 
             oof_preds_lgb[valid_idx] = clf.predict(valid_x, num_iteration=clf.best_iteration)
+            
+        # find the best thred for f1-score
+        f1_score_df = pd.DataFrame()
+        for thred in [i/10000 for i in range(0,10000,1) if (i/10000>0.1) & (i/10000<0.3)]:
 
-        cv_result = roc_auc_score(train_df['Y_LABEL'], oof_preds_lgb)        
+            a1 = pd.DataFrame()
+            f1 = f1_score(train_df['Y_LABEL'], np.where(oof_preds_lgb>=thred,1,0), average='macro')
+            a1['f1'] = [f1]
+            a1['thred'] = [thred]
+            f1_score_df = pd.concat([f1_score_df, a1], axis=0)
+
+        thred = f1_score_df.loc[f1_score_df['f1']==f1_score_df['f1'].max(),'thred'].tolist()[0]
+    
+        # err
+        # thred = 0.1636
+        oof_f1 = f1_score(train_df['Y_LABEL'], np.where(oof_preds_lgb>thred,1,0), average='macro')
        
         # ----
 
-        return cv_result
+        return oof_f1
 
     lgbBO = BayesianOptimization(lgb_eval, opt_params, random_state=1)
     
