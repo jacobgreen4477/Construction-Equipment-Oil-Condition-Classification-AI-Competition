@@ -47,7 +47,6 @@ def bayes_parameter_opt_lgb(
     opt_round=25, 
     n_folds=3, 
     seed_num=1, 
-    n_estimators=10000, 
     output_process=False, 
     drop_features=[]
     ):   
@@ -66,9 +65,6 @@ def bayes_parameter_opt_lgb(
     # parameters
     def lgb_eval(**params): 
         
-        params['seed'] = seed_num
-        params['verbose'] = -1
-
         params['learning_rate'] = max(min(params['learning_rate'], 1), 0)
         params["num_leaves"] = int(round(params['num_leaves']))
         params['colsample_bytree'] = max(min(params['colsample_bytree'], 1), 0)
@@ -92,8 +88,10 @@ def bayes_parameter_opt_lgb(
 
         # Create arrays and dataframes to store results
         oof_preds_lgb = np.zeros(train_df.shape[0])
-
         feats = [f for f in train_df.columns if f not in ['Y_LABEL','ID','SAMPLE_TRANSFER_DAY']+drop_features]
+        
+        params['seed'] = seed_num
+        params['verbose'] = -1
 
         for n_fold, (train_idx, valid_idx) in enumerate(folds.split(train_df[feats], train_df['Y_LABEL'])):
             train_x, train_y = train_df[feats].iloc[train_idx], train_df['Y_LABEL'].iloc[train_idx]
@@ -112,9 +110,8 @@ def bayes_parameter_opt_lgb(
                     params,                
                     train_set = lgb_train,
                     valid_sets = [lgb_train,lgb_valid],
-                    num_boost_round = 5000,
                     verbose_eval = False,
-                    early_stopping_rounds = 200,
+                    num_boost_round = 10000,
                     categorical_feature = categorical_feature
                 )
 
