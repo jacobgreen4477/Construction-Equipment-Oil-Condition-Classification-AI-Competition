@@ -46,9 +46,9 @@ from optuna import Trial
 # study = optuna.create_study(pruner=optuna.pruners.MedianPruner(n_warmup_steps=100),direction="maximize")
 # study.optimize(objective_with_prune, n_trials=200)
 
-def objective_with_prune(trial:Trial, train, seed_num, drop_features, categorical_feature):  
+def objective_with_prune(trial:Trial, train):  
        
-    global seed_num, drop_features,categorical_feature
+    global seed_num, drop_features, categorical_feature
        
     print('seed_num',seed_num)
        
