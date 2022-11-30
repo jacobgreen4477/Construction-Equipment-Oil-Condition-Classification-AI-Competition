@@ -137,7 +137,7 @@ def bayes_parameter_opt_lgb(
 
         return oof_f1
 
-    lgbBO = BayesianOptimization(lgb_eval, opt_params, random_state=1)
+    lgbBO = BayesianOptimization(lgb_eval, opt_params, random_state=seed_num)
     
     with warnings.catch_warnings():
         warnings.filterwarnings('ignore')
