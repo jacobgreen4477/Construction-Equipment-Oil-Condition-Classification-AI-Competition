@@ -41,6 +41,11 @@ from DMS_202211.seed_everything import seed_everything
 
 def find_best_seed(train,test,params,stratified,num_folds,drop_features,seed_num):
     
+    # start log 
+    print('-'*50)
+    print('>> seed_num:',seed_num)   
+    print('>> drop_features:',len(drop_features))
+    
     seed_everything(seed_num)
     
     # Divide in training/validation and test data
