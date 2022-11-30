@@ -74,6 +74,8 @@ def find_best_seed(train,test,params,stratified,num_folds,drop_features,seed_num
     oof_preds_lgb = np.zeros(train_df.shape[0])
     sub_preds_lgb = np.zeros(test_df.shape[0])
     feats = [f for f in train_df.columns if f not in ['Y_LABEL','ID','SAMPLE_TRANSFER_DAY']+drop_features]
+    
+    params['seed'] = seed_num
 
     for n_fold, (train_idx, valid_idx) in enumerate(folds.split(train_df[feats], train_df['Y_LABEL'])):
         
