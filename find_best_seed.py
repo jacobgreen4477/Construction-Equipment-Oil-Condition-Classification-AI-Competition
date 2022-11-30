@@ -112,10 +112,10 @@ def find_best_seed(train,test,params,stratified,num_folds,drop_features,seed_num
 
     # find the best thred for f1-score
     f1_score_df = pd.DataFrame()
-    for thred in [i/1000 for i in range(0,1000,1)]:
+    for thred in [i/10000 for i in range(0,10000,1) if (i/10000>0.1) & (i/10000<0.3)]:
 
         a1 = pd.DataFrame()
-        f1 = f1_score(train_df['Y_LABEL'], np.where(oof_preds_lgb>thred,1,0), average='macro')
+        f1 = f1_score(train_df['Y_LABEL'], np.where(oof_preds_lgb>=thred,1,0), average='macro')
         a1['f1'] = [f1]
         a1['thred'] = [thred]
         f1_score_df = pd.concat([f1_score_df, a1], axis=0)
