@@ -45,13 +45,13 @@ def bayes_parameter_opt_lgb(
     init_round=15, 
     opt_round=25, 
     n_folds=3, 
-    random_seed=1, 
+    seed_num=1, 
     n_estimators=10000, 
     output_process=False, 
     drop_features=[]
     ):   
     
-    seed_everything(1)
+    seed_everything(seed_num)
     
     train_df = train.copy()
 
@@ -61,13 +61,6 @@ def bayes_parameter_opt_lgb(
     categorical_features = [i for i in categorical_features if i in train_df.columns.tolist()]
     for each in categorical_features:
         train_df[each] = encoder.fit_transform(train_df[each])
-        
-    # feats = [f for f in train_df.columns if f not in ['Y_LABEL','ID','SAMPLE_TRANSFER_DAY']]    
-    # X = train_df[feats].copy()
-    # y = train_df['Y_LABEL'].copy()
-    
-    # prepare data
-    # train_data = lgb.Dataset(data=X, label=y, free_raw_data=False)
     
     # parameters
     def lgb_eval(
@@ -94,19 +87,19 @@ def bayes_parameter_opt_lgb(
         params['reg_lambda'] = reg_lambda        
         params['min_split_gain'] = min_split_gain
         params['min_child_weight'] = min_child_weight
-        params['min_child_samples'] = int(round(min_child_samples))
+        params['min_child_samples'] = int(round(min_child_samples))   
         
-        # cv_result = lgb.cv(params, train_data, nfold=n_folds, seed=random_seed, stratified=True, verbose_eval =200, metrics=['auc'])
-        
+        params['seed'] = seed_num
+       
         # -----        
         
         stratified = True
         
         # Cross validation model
         if stratified:
-            folds = StratifiedKFold(n_splits= 5, shuffle=True, random_state=1)
+            folds = StratifiedKFold(n_splits= 5, shuffle=True, random_state=seed_num)
         else:
-            folds = KFold(n_splits= 5, shuffle=True, random_state=1)
+            folds = KFold(n_splits= 5, shuffle=True, random_state=seed_num)
 
         # Create arrays and dataframes to store results
         oof_preds_lgb = np.zeros(train_df.shape[0])
@@ -151,7 +144,7 @@ def bayes_parameter_opt_lgb(
 
         return cv_result
 
-    lgbBO = BayesianOptimization(lgb_eval, opt_params, random_state=1)
+    lgbBO = BayesianOptimization(lgb_eval, opt_params, random_state=seed_num)
     
     with warnings.catch_warnings():
         warnings.filterwarnings('ignore')
