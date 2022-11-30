@@ -39,7 +39,7 @@ from DMS_202211.seed_everything import seed_everything
 
 pd.set_option('display.max_rows', 500)
 
-def bayes_parameter_opt_lgb_f1(
+def bayes_parameter_opt_lgb(
     train, 
     params,
     opt_params, 
