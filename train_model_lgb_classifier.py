@@ -40,7 +40,7 @@ pd.set_option('display.max_rows', 500)
 from DMS_202211.seed_everything import seed_everything
 
 
-def train_model_lgb_classifier2(train,test,params,stratified,num_folds,drop_features,seed_num):
+def train_model_lgb_classifier(train,test,params,stratified,num_folds,drop_features,seed_num):
     
     # start log 
     print('-'*50)
