@@ -68,7 +68,6 @@ def find_best_seed(train,test,params,stratified,num_folds,drop_features,seed_num
     # Create arrays and dataframes to store results
     oof_preds_lgb = np.zeros(train_df.shape[0])
     sub_preds_lgb = np.zeros(test_df.shape[0])
-    feature_importance_df = pd.DataFrame()
     feats = [f for f in train_df.columns if f not in ['Y_LABEL','ID','SAMPLE_TRANSFER_DAY']+drop_features]
 
     for n_fold, (train_idx, valid_idx) in enumerate(folds.split(train_df[feats], train_df['Y_LABEL'])):
@@ -97,23 +96,12 @@ def find_best_seed(train,test,params,stratified,num_folds,drop_features,seed_num
         oof_preds_lgb[valid_idx] = clf.predict(valid_x, num_iteration=clf.best_iteration)
         sub_preds_lgb += clf.predict(test_df[feats], num_iteration=clf.best_iteration) / folds.n_splits
 
-        fold_importance_df = pd.DataFrame()
-        fold_importance_df["feature"] = feats
-        fold_importance_df["importance"] = clf.feature_importances_
-        fold_importance_df["fold"] = n_fold + 1
-        feature_importance_df = pd.concat([feature_importance_df, fold_importance_df], axis=0)
         print('Fold %2d AUC : %.6f' % (n_fold + 1, roc_auc_score(valid_y, oof_preds_lgb[valid_idx])))
 
     print('Full AUC score %.6f' % roc_auc_score(train_df['Y_LABEL'], oof_preds_lgb))
 
     # Write submission file and plot feature importance
     test_df['Y_LABEL_lgb'] = sub_preds_lgb
-
-    # vi
-    # print('-'*50)
-    # display(feature_importance_df.groupby(['feature'])['importance'].sum().sort_values(ascending=False).head(20))
-    # print('-'*50)
-    # display_importances(feature_importance_df)
 
     # find the best thred for f1-score
     f1_score_df = pd.DataFrame()
