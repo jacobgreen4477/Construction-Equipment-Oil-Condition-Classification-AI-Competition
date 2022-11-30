@@ -75,8 +75,18 @@ def train_model_lgb_classifier(train,test,params,stratified,num_folds,drop_featu
     oof_preds_lgb = np.zeros(train_df.shape[0])
     sub_preds_lgb = np.zeros(test_df.shape[0])
     feature_importance_df = pd.DataFrame()
-    feats = [f for f in train_df.columns if f not in ['Y_LABEL','ID','SAMPLE_TRANSFER_DAY']+drop_features]
+    feats = [f for f in train_df.columns if f not in ['Y_LABEL','ID','SAMPLE_TRANSFER_DAY']+drop_features]    
     
+    params['learning_rate'] = max(min(params['learning_rate'], 1), 0)
+    params["num_leaves"] = int(round(params['num_leaves']))
+    params['colsample_bytree'] = max(min(params['colsample_bytree'], 1), 0)
+    params['subsample'] = max(min(params['subsample'], 1), 0)
+    params['max_depth'] = int(round(params['max_depth']))        
+    params['reg_alpha'] = params['reg_alpha']
+    params['reg_lambda'] = params['reg_lambda']        
+    params['min_split_gain'] = params['min_split_gain']
+    params['min_child_weight'] = params['min_child_weight']
+    params['min_child_samples'] = int(round(params['min_child_samples']))  
     params['seed'] = seed_num
 
     for n_fold, (train_idx, valid_idx) in enumerate(folds.split(train_df[feats], train_df['Y_LABEL'])):
