@@ -69,9 +69,9 @@ def bayes_parameter_opt_lgb(
         
         # Cross validation model
         if stratified:
-            folds = StratifiedKFold(n_splits= 5, shuffle=True, random_state=seed_num)
+            folds = StratifiedKFold(n_splits= n_folds, shuffle=True, random_state=seed_num)
         else:
-            folds = KFold(n_splits= 5, shuffle=True, random_state=seed_num)
+            folds = KFold(n_splits= n_folds, shuffle=True, random_state=seed_num)
 
         # Create arrays and dataframes to store results
         oof_preds_lgb = np.zeros(train_df.shape[0])
