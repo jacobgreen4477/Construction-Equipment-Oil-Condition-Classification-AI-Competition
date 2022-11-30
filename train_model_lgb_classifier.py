@@ -40,7 +40,7 @@ pd.set_option('display.max_rows', 500)
 from DMS_202211.seed_everything import seed_everything
 
 
-def train_model_lgb_classifier(train,test,params,stratified,num_folds,drop_features,seed_num):
+def train_model_lgb_classifier2(train,test,params,stratified,num_folds,drop_features,seed_num):
     
     # start log 
     print('-'*50)
@@ -118,55 +118,50 @@ def train_model_lgb_classifier(train,test,params,stratified,num_folds,drop_featu
 
     # vi
     # print('-'*50)
-    display(feature_importance_df.groupby(['feature'])['importance_gain'].sum().sort_values(ascending=False).head(30))
+    # display(feature_importance_df.groupby(['feature'])['importance_gain'].sum().sort_values(ascending=False).head(30))
     # print('-'*50)
     # display_importances(feature_importance_df)
     
     # train auc
     oof_auc = roc_auc_score(train_df['Y_LABEL'], oof_preds_lgb)
-
     
-    if oof_auc>=0.703:
+    # find the best thred for f1-score
+    f1_score_df = pd.DataFrame()
+    for thred in [i/10000 for i in range(0,10000,1) if (i/10000>0.1) & (i/10000<0.3)]:
 
-        # find the best thred for f1-score
-        f1_score_df = pd.DataFrame()
-        for thred in [i/10000 for i in range(0,10000,1) if (i/10000>0.1) & (i/10000<0.3)]:
+        a1 = pd.DataFrame()
+        f1 = f1_score(train_df['Y_LABEL'], np.where(oof_preds_lgb>=thred,1,0), average='macro')
+        a1['f1'] = [f1]
+        a1['thred'] = [thred]
+        f1_score_df = pd.concat([f1_score_df, a1], axis=0)
 
-            a1 = pd.DataFrame()
-            f1 = f1_score(train_df['Y_LABEL'], np.where(oof_preds_lgb>=thred,1,0), average='macro')
-            a1['f1'] = [f1]
-            a1['thred'] = [thred]
-            f1_score_df = pd.concat([f1_score_df, a1], axis=0)
+    thred = f1_score_df.loc[f1_score_df['f1']==f1_score_df['f1'].max(),'thred'].tolist()[0]
+    print('thred:',thred)
+    print('ncol',len(feats))
 
-        thred = f1_score_df.loc[f1_score_df['f1']==f1_score_df['f1'].max(),'thred'].tolist()[0]
-        print('thred:',thred)
-        print('ncol',len(feats))
+    # train f1
+    print('auc:',oof_auc)
+    oof_f1 = f1_score(train_df['Y_LABEL'], np.where(oof_preds_lgb>thred,1,0), average='macro')
+    print('f1:',oof_f1)
+    a1 = train_df['Y_LABEL'].value_counts()/len(train_df)
+    print('Target ratio(real):',(a1[1]))
 
-        # train f1
-        print('auc:',oof_auc)
-        oof_f1 = f1_score(train_df['Y_LABEL'], np.where(oof_preds_lgb>thred,1,0), average='macro')
-        print('f1:',oof_f1)
-        a1 = train_df['Y_LABEL'].value_counts()/len(train_df)
-        print('Target ratio(real):',(a1[1]))
+    # test err
+    test_df['TARGET'] = np.where(test_df['Y_LABEL_lgb']>thred,1,0)
+    a1 = test_df['TARGET'].value_counts()/len(test_df)
+    print('Target ratio(pred):',(a1[1]))
+    target_sum = test_df['TARGET'].sum()
+    print('Target sum:',target_sum)
 
-        # test err
-        test_df['TARGET'] = np.where(test_df['Y_LABEL_lgb']>thred,1,0)
-        a1 = test_df['TARGET'].value_counts()/len(test_df)
-        print('Target ratio(pred):',(a1[1]))
-        target_sum = test_df['TARGET'].sum()
-        print('Target sum:',target_sum)
-        
-        if (target_sum>=510) & (target_sum<590):
+    # save 
+    train_df['Y_LABEL_lgb'] = oof_preds_lgb
+    a1 = train_df[['ID','YEAR','COMPONENT_ARBITRARY','Y_LABEL_lgb','Y_LABEL']].copy()
+    a1.to_csv('train_pred_'+str(seed_num)+'_'+str(np.round(oof_f1,10))+'.csv', index= False)    
+    a1 = test_df[['ID','YEAR','COMPONENT_ARBITRARY','Y_LABEL_lgb']].copy()
+    a1.to_csv('test_pred_'+str(seed_num)+'_'+str(np.round(oof_f1,10))+'.csv', index= False)
 
-            # save 
-            train_df['Y_LABEL_lgb'] = oof_preds_lgb
-            a1 = train_df[['ID','YEAR','COMPONENT_ARBITRARY','Y_LABEL_lgb','Y_LABEL']].copy()
-            a1.to_csv('train_pred_'+str(seed_num)+'_'+str(np.round(oof_f1,10))+'.csv', index= False)    
-            a1 = test_df[['ID','YEAR','COMPONENT_ARBITRARY','Y_LABEL_lgb']].copy()
-            a1.to_csv('test_pred_'+str(seed_num)+'_'+str(np.round(oof_f1,10))+'.csv', index= False)
-
-            # submit
-            a1 = test_df[['ID', 'TARGET']].copy()
-            a1 = a1.rename(columns={'TARGET':'Y_LABEL'})
-            submission_file_name = 'sample_submission_lgb_'+str(np.round(oof_f1,4))+'.csv'
-            a1.to_csv(submission_file_name, index= False)
+    # submit
+    a1 = test_df[['ID', 'TARGET']].copy()
+    a1 = a1.rename(columns={'TARGET':'Y_LABEL'})
+    submission_file_name = 'sample_submission_lgb_'+str(np.round(oof_f1,4))+'.csv'
+    a1.to_csv(submission_file_name, index= False)
