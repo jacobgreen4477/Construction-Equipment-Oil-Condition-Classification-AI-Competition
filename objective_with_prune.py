@@ -43,6 +43,9 @@ from tqdm import tqdm_notebook as tqdm
 import optuna
 from optuna import Trial
 
+# study = optuna.create_study(pruner=optuna.pruners.MedianPruner(n_warmup_steps=100),direction="maximize")
+# study.optimize(objective_with_prune, n_trials=200)
+
 def objective_with_prune(trial: Trial, seed_num=best_seed, drop_features=[], categorical_feature=[]):  
        
     def f1_eval(yhat,data):
