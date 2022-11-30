@@ -72,59 +72,30 @@ def find_best_seed(train,test,params,stratified,num_folds,drop_features,seed_num
     feats = [f for f in train_df.columns if f not in ['Y_LABEL','ID','SAMPLE_TRANSFER_DAY']+drop_features]
 
     for n_fold, (train_idx, valid_idx) in enumerate(folds.split(train_df[feats], train_df['Y_LABEL'])):
+        
         train_x, train_y = train_df[feats].iloc[train_idx], train_df['Y_LABEL'].iloc[train_idx]
         valid_x, valid_y = train_df[feats].iloc[valid_idx], train_df['Y_LABEL'].iloc[valid_idx]
 
-        """        
-        learning_rate=0.02,
-        num_leaves=34,
-        colsample_bytree=0.2,
-        subsample=0.8715623,
-        max_depth=4,
-        reg_alpha=0.041545473,
-        reg_lambda=0.0735294,
-        min_split_gain=0.0222415,
-        min_child_weight=39.3259775,
-        min_child_samples = 10,
-        """
-
-        # LightGBM parameters found by Bayesian optimization
-        clf = LGBMClassifier(
-            
-            learning_rate = params['learning_rate'],
-            num_leaves = int(round(params['num_leaves'])),
-            colsample_bytree = params['colsample_bytree'],
-            subsample = params['subsample'],
-            max_depth = int(round(params['max_depth'])),
-            reg_alpha = params['reg_alpha'],
-            reg_lambda = params['reg_lambda'],
-            min_split_gain = params['min_split_gain'],
-            min_child_weight = params['min_child_weight'],
-            min_child_samples = int(round(params['min_child_samples'])),    
-            
-            n_jobs = -1,
-            n_estimators = 100000,            
-            random_state = seed_num,
-            silent=-1,
-            deterministic=True,
-            verbose=-1
-        )
+        categorical_feature = []        
+        lgb_train = lgb.Dataset(data=train_x, label=train_y, categorical_feature=categorical_feature)
+        lgb_valid = lgb.Dataset(data=valid_x, label=valid_y, reference=lgb_train, categorical_feature=categorical_feature)
         
         with warnings.catch_warnings():
             
-            warnings.filterwarnings('ignore')
+            warnings.filterwarnings('ignore')  
+            
+            clf = lgb.train(
 
-            clf.fit(
-                  train_x
-                , train_y
-                , eval_set=[(train_x, train_y), (valid_x, valid_y)]
-                , eval_metric= 'auc'
-                , verbose= 200
-                , early_stopping_rounds= 700
+                params,                
+                train_set = lgb_train,
+                valid_sets = [lgb_train,lgb_valid],
+                verbose_eval = -1,
+                num_boost_round = 10000,
+                categorical_feature = categorical_feature
             )
 
-        oof_preds_lgb[valid_idx] = clf.predict_proba(valid_x, num_iteration=clf.best_iteration_)[:, 1]
-        sub_preds_lgb += clf.predict_proba(test_df[feats], num_iteration=clf.best_iteration_)[:, 1] / folds.n_splits
+        oof_preds_lgb[valid_idx] = clf.predict(valid_x, num_iteration=clf.best_iteration)
+        sub_preds_lgb += clf.predict(test_df[feats], num_iteration=clf.best_iteration) / folds.n_splits
 
         fold_importance_df = pd.DataFrame()
         fold_importance_df["feature"] = feats
@@ -139,7 +110,7 @@ def find_best_seed(train,test,params,stratified,num_folds,drop_features,seed_num
     test_df['Y_LABEL_lgb'] = sub_preds_lgb
 
     # vi
-    print('-'*50)
+    # print('-'*50)
     # display(feature_importance_df.groupby(['feature'])['importance'].sum().sort_values(ascending=False).head(20))
     # print('-'*50)
     # display_importances(feature_importance_df)
@@ -159,6 +130,12 @@ def find_best_seed(train,test,params,stratified,num_folds,drop_features,seed_num
     print('ncol',len(feats))
 
     # train err
-    a1 = roc_auc_score(train_df['Y_LABEL'], oof_preds_lgb)
+    oof_auc = roc_auc_score(train_df['Y_LABEL'], oof_preds_lgb)
+    print('auc:',oof_auc)
+    oof_f1 = f1_score(train_df['Y_LABEL'], np.where(oof_preds_lgb>thred,1,0), average='macro')
+    print('f1:',oof_f1)
+    test_df['TARGET'] = np.where(test_df['Y_LABEL_lgb']>thred,1,0)
+    target_sum = test_df['TARGET'].sum()
+    print('target_sum:',target_sum)
     
-    return {'seed_num':[seed_num],'auc':[a1]}
+    return {'seed_num':seed_num,'auc':oof_auc,'f1':oof_f1,'target_sum':target_sum}
