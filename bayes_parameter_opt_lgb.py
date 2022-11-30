@@ -39,8 +39,9 @@ from DMS_202211.seed_everything import seed_everything
 
 pd.set_option('display.max_rows', 500)
 
-def bayes_parameter_opt_lgb(
+def bayes_parameter_opt_lgb_f1(
     train, 
+    params,
     opt_params, 
     init_round=15, 
     opt_round=25, 
@@ -60,37 +61,25 @@ def bayes_parameter_opt_lgb(
     categorical_features = [i for i in train_df.select_dtypes(include=['object','category']).columns.tolist() if i not in ['ID']]
     categorical_features = [i for i in categorical_features if i in train_df.columns.tolist()]
     for each in categorical_features:
-        train_df[each] = encoder.fit_transform(train_df[each])
-    
+        train_df[each] = encoder.fit_transform(train_df[each])    
+   
     # parameters
-    def lgb_eval(
-          learning_rate
-        , num_leaves
-        , colsample_bytree
-        , subsample
-        , max_depth
-        , reg_alpha
-        , reg_lambda
-        , min_split_gain
-        , min_child_weight
-        , min_child_samples
-
-    ):
-        
-        params = {'application':'binary', 'metric':'auc'}
-        params['learning_rate'] = max(min(learning_rate, 1), 0)
-        params["num_leaves"] = int(round(num_leaves))
-        params['colsample_bytree'] = max(min(colsample_bytree, 1), 0)
-        params['subsample'] = max(min(subsample, 1), 0)
-        params['max_depth'] = int(round(max_depth))        
-        params['reg_alpha'] = reg_alpha
-        params['reg_lambda'] = reg_lambda        
-        params['min_split_gain'] = min_split_gain
-        params['min_child_weight'] = min_child_weight
-        params['min_child_samples'] = int(round(min_child_samples))   
+    def lgb_eval(**params): 
         
         params['seed'] = seed_num
-       
+        params['verbose'] = -1
+
+        params['learning_rate'] = max(min(params['learning_rate'], 1), 0)
+        params["num_leaves"] = int(round(params['num_leaves']))
+        params['colsample_bytree'] = max(min(params['colsample_bytree'], 1), 0)
+        params['subsample'] = max(min(params['subsample'], 1), 0)
+        params['max_depth'] = int(round(params['max_depth']))        
+        params['reg_alpha'] = params['reg_alpha']
+        params['reg_lambda'] = params['reg_lambda']        
+        params['min_split_gain'] = params['min_split_gain']
+        params['min_child_weight'] = params['min_child_weight']
+        params['min_child_samples'] = int(round(params['min_child_samples']))        
+   
         # -----        
         
         stratified = True
@@ -110,41 +99,48 @@ def bayes_parameter_opt_lgb(
             train_x, train_y = train_df[feats].iloc[train_idx], train_df['Y_LABEL'].iloc[train_idx]
             valid_x, valid_y = train_df[feats].iloc[valid_idx], train_df['Y_LABEL'].iloc[valid_idx]
 
-            # LightGBM parameters found by Bayesian optimization
-            clf = LGBMClassifier(
-
-                **params,
-
-                n_jobs = -1,
-                n_estimators = 10000,            
-                random_state = 1,
-                silent=True,
-                deterministic=True,
-                verbose=-100
-            )
+            categorical_feature = []        
+            lgb_train = lgb.Dataset(data=train_x, label=train_y, categorical_feature=categorical_feature)
+            lgb_valid = lgb.Dataset(data=valid_x, label=valid_y, reference=lgb_train, categorical_feature=categorical_feature)
 
             with warnings.catch_warnings():
 
-                warnings.filterwarnings('ignore')
+                warnings.filterwarnings('ignore')  
 
-                clf.fit(
-                      train_x
-                    , train_y
-                    , eval_set=[(train_x, train_y), (valid_x, valid_y)]
-                    , eval_metric= 'auc'
-                    , verbose= False
-                    , early_stopping_rounds= 500
+                clf = lgb.train(
+
+                    params,                
+                    train_set = lgb_train,
+                    valid_sets = [lgb_train,lgb_valid],
+                    num_boost_round = 5000,
+                    verbose_eval = False,
+                    early_stopping_rounds = 200,
+                    categorical_feature = categorical_feature
                 )
 
-            oof_preds_lgb[valid_idx] = clf.predict_proba(valid_x, num_iteration=clf.best_iteration_)[:, 1]
+            oof_preds_lgb[valid_idx] = clf.predict(valid_x, num_iteration=clf.best_iteration)
+            
+        # find the best thred for f1-score
+        f1_score_df = pd.DataFrame()
+        for thred in [i/10000 for i in range(0,10000,1) if (i/10000>0.1) & (i/10000<0.3)]:
 
-        cv_result = roc_auc_score(train_df['Y_LABEL'], oof_preds_lgb)        
+            a1 = pd.DataFrame()
+            f1 = f1_score(train_df['Y_LABEL'], np.where(oof_preds_lgb>=thred,1,0), average='macro')
+            a1['f1'] = [f1]
+            a1['thred'] = [thred]
+            f1_score_df = pd.concat([f1_score_df, a1], axis=0)
+
+        thred = f1_score_df.loc[f1_score_df['f1']==f1_score_df['f1'].max(),'thred'].tolist()[0]
+    
+        # err
+        # thred = 0.1636
+        oof_f1 = f1_score(train_df['Y_LABEL'], np.where(oof_preds_lgb>thred,1,0), average='macro')
        
         # ----
 
-        return cv_result
+        return oof_f1
 
-    lgbBO = BayesianOptimization(lgb_eval, opt_params, random_state=seed_num)
+    lgbBO = BayesianOptimization(lgb_eval, opt_params, random_state=1)
     
     with warnings.catch_warnings():
         warnings.filterwarnings('ignore')
