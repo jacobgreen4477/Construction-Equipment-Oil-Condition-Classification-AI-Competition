@@ -63,20 +63,7 @@ def bayes_parameter_opt_lgb(
         train_df[each] = encoder.fit_transform(train_df[each])    
    
     # parameters
-    def lgb_eval(**params): 
-        
-        params['learning_rate'] = max(min(params['learning_rate'], 1), 0)
-        params["num_leaves"] = int(round(params['num_leaves']))
-        params['colsample_bytree'] = max(min(params['colsample_bytree'], 1), 0)
-        params['subsample'] = max(min(params['subsample'], 1), 0)
-        params['max_depth'] = int(round(params['max_depth']))        
-        params['reg_alpha'] = params['reg_alpha']
-        params['reg_lambda'] = params['reg_lambda']        
-        params['min_split_gain'] = params['min_split_gain']
-        params['min_child_weight'] = params['min_child_weight']
-        params['min_child_samples'] = int(round(params['min_child_samples']))        
-   
-        # -----        
+    def lgb_eval(**params):     
         
         stratified = True
         
@@ -90,6 +77,16 @@ def bayes_parameter_opt_lgb(
         oof_preds_lgb = np.zeros(train_df.shape[0])
         feats = [f for f in train_df.columns if f not in ['Y_LABEL','ID','SAMPLE_TRANSFER_DAY']+drop_features]
         
+        params['learning_rate'] = max(min(params['learning_rate'], 1), 0)
+        params["num_leaves"] = int(round(params['num_leaves']))
+        params['colsample_bytree'] = max(min(params['colsample_bytree'], 1), 0)
+        params['subsample'] = max(min(params['subsample'], 1), 0)
+        params['max_depth'] = int(round(params['max_depth']))        
+        params['reg_alpha'] = params['reg_alpha']
+        params['reg_lambda'] = params['reg_lambda']        
+        params['min_split_gain'] = params['min_split_gain']
+        params['min_child_weight'] = params['min_child_weight']
+        params['min_child_samples'] = int(round(params['min_child_samples']))  
         params['seed'] = seed_num
         params['verbose'] = -1
 
@@ -130,7 +127,6 @@ def bayes_parameter_opt_lgb(
         thred = f1_score_df.loc[f1_score_df['f1']==f1_score_df['f1'].max(),'thred'].tolist()[0]
     
         # err
-        # thred = 0.1636
         oof_f1 = f1_score(train_df['Y_LABEL'], np.where(oof_preds_lgb>thred,1,0), average='macro')
        
         # ----
