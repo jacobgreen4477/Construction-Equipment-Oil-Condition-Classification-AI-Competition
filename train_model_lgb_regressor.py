@@ -56,6 +56,8 @@ def train_model_lgb_regressor(train,test,params,stratified,num_folds,drop_featur
     # Divide in training/validation and test data
     train_df = train.copy()
     test_df = test.copy()
+    
+    train_df['AL'] = np.log(train_df['AL']+1)
 
     # label encoding 
     encoder = LabelEncoder()
@@ -79,11 +81,11 @@ def train_model_lgb_regressor(train,test,params,stratified,num_folds,drop_featur
     oof_preds_lgb = np.zeros(train_df.shape[0])
     sub_preds_lgb = np.zeros(test_df.shape[0])
     feature_importance_df = pd.DataFrame()
-    feats = [f for f in train_df.columns if f not in ['Y_LABEL','ID','SAMPLE_TRANSFER_DAY']+drop_features]
+    feats = [f for f in train_df.columns if f not in ['Y_LABEL','ID','SAMPLE_TRANSFER_DAY','AL']+drop_features]
 
-    for n_fold, (train_idx, valid_idx) in enumerate(folds.split(train_df[feats], train_df['Y_LABEL'])):
-        train_x, train_y = train_df[feats].iloc[train_idx], train_df['Y_LABEL'].iloc[train_idx]
-        valid_x, valid_y = train_df[feats].iloc[valid_idx], train_df['Y_LABEL'].iloc[valid_idx]
+    for n_fold, (train_idx, valid_idx) in enumerate(folds.split(train_df[feats], train_df['YEAR'])):
+        train_x, train_y = train_df[feats].iloc[train_idx], train_df['AL'].iloc[train_idx]
+        valid_x, valid_y = train_df[feats].iloc[valid_idx], train_df['AL'].iloc[valid_idx]
 
         """        
         learning_rate=0.02,
@@ -149,54 +151,14 @@ def train_model_lgb_regressor(train,test,params,stratified,num_folds,drop_featur
     print('Full RMSE score %.6f' % mean_squared_error(train_df['Y_LABEL'], oof_preds_lgb)**0.5)
 
     # Write submission file and plot feature importance
-    test_df['Y_LABEL_lgb'] = sub_preds_lgb
+    train_df['Y_LABEL_lgb'] = oof_preds_lgb
+    test_df['Y_LABEL_lgb'] = sub_preds_lgb   
+    
 
     # vi
     # print('-'*50)
     display(feature_importance_df.groupby(['feature'])['importance'].sum().sort_values(ascending=False).head(30))
     # print('-'*50)
-    # display_importances(feature_importance_df)
+    # display_importances(feature_importance_df)   
     
-    # train auc
-    oof_auc = mean_squared_error(train_df['Y_LABEL'], oof_preds_lgb)
-
-    # find the best thred for f1-score
-    f1_score_df = pd.DataFrame()
-    for thred in [i/10000 for i in range(0,10000,1) if (i/10000>0.1) & (i/10000<0.35)]:
-
-        a1 = pd.DataFrame()
-        f1 = f1_score(train_df['Y_LABEL'], np.where(oof_preds_lgb>thred,1,0), average='macro')
-        a1['f1'] = [f1]
-        a1['thred'] = [thred]
-        f1_score_df = pd.concat([f1_score_df, a1], axis=0)
-
-    thred = f1_score_df.loc[f1_score_df['f1']==f1_score_df['f1'].max(),'thred'].tolist()[0]
-    print('thred:',thred)
-    print('ncol',len(feats))
-
-    # train f1
-    print('auc:',oof_auc)
-    oof_f1 = f1_score(train_df['Y_LABEL'], np.where(oof_preds_lgb>thred,1,0), average='macro')
-    print('f1:',oof_f1)
-    a1 = train_df['Y_LABEL'].value_counts()/len(train_df)
-    print('Target ratio(real):',(a1[1]))
-
-    # test err
-    test_df['TARGET'] = np.where(test_df['Y_LABEL_lgb']>thred,1,0)
-    a1 = test_df['TARGET'].value_counts()/len(test_df)
-    print('Target ratio(pred):',(a1[1]))
-    target_sum = test_df['TARGET'].sum()
-    print('Target sum:',target_sum)        
-
-    # save 
-    train_df['Y_LABEL_lgb'] = oof_preds_lgb
-    a1 = train_df[['ID','YEAR','COMPONENT_ARBITRARY','Y_LABEL_lgb','Y_LABEL']].copy()
-    a1.to_csv('train_pred_'+str(seed_num)+'_'+str(np.round(oof_f1,10))+'.csv', index= False)    
-    a1 = test_df[['ID','YEAR','COMPONENT_ARBITRARY','Y_LABEL_lgb']].copy()
-    a1.to_csv('test_pred_'+str(seed_num)+'_'+str(np.round(oof_f1,10))+'.csv', index= False)
-
-    # submit
-    a1 = test_df[['ID', 'TARGET']].copy()
-    a1 = a1.rename(columns={'TARGET':'Y_LABEL'})
-    submission_file_name = 'sample_submission_lgb_'+str(np.round(oof_f1,4))+'.csv'
-    a1.to_csv(submission_file_name, index= False)
+    return train_df,test_df
