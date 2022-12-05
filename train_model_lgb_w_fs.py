@@ -12,9 +12,7 @@ def train_model_lgb_w_fs(train,test,params,stratified,num_folds,drop_features,se
 
         # Divide in training/validation and test data
         train_df = train.copy()
-        test_df = test.copy()
-
-        new_feature = train_df.columns[train_df.columns.str.contains('new')].tolist()
+        test_df = test.copy()        
 
         # label encoding 
         encoder = LabelEncoder()
@@ -38,9 +36,11 @@ def train_model_lgb_w_fs(train,test,params,stratified,num_folds,drop_features,se
         oof_preds_lgb = np.zeros(train_df.shape[0])
         sub_preds_lgb = np.zeros(test_df.shape[0])
         feature_importance_df = pd.DataFrame()
+        new_feature = train_df.columns[train_df.columns.str.contains('new')].tolist()
+        drop_features = list(set(drop_features))
         feats = [f for f in train_df.columns if f not in ['Y_LABEL','ID','SAMPLE_TRANSFER_DAY']+drop_features]
-        feats = feats + new_feature
-
+        feats = feats+new_feature
+        
         for n_fold, (train_idx, valid_idx) in enumerate(folds.split(train_df[feats], train_df['Y_LABEL'])):
             train_x, train_y = train_df[feats].iloc[train_idx], train_df['Y_LABEL'].iloc[train_idx]
             valid_x, valid_y = train_df[feats].iloc[valid_idx], train_df['Y_LABEL'].iloc[valid_idx]
@@ -108,8 +108,6 @@ def train_model_lgb_w_fs(train,test,params,stratified,num_folds,drop_features,se
     train_df = train.copy()
     test_df = test.copy()
     
-    new_feature = train_df.columns[train_df.columns.str.contains('new')].tolist()
-
     # label encoding 
     encoder = LabelEncoder()
     categorical_features = [i for i in train_df.select_dtypes(include=['object','category']).columns.tolist() if i not in ['ID']]
@@ -132,7 +130,10 @@ def train_model_lgb_w_fs(train,test,params,stratified,num_folds,drop_features,se
     oof_preds_lgb = np.zeros(train_df.shape[0])
     sub_preds_lgb = np.zeros(test_df.shape[0])
     feature_importance_df = pd.DataFrame()
+    new_feature = train_df.columns[train_df.columns.str.contains('new')].tolist()
+    drop_features = list(set(drop_features+new_feature))
     feats = [f for f in train_df.columns if f not in ['Y_LABEL','ID','SAMPLE_TRANSFER_DAY']+drop_features]
+    # feats = list(set(feats))
 
     for n_fold, (train_idx, valid_idx) in enumerate(folds.split(train_df[feats], train_df['Y_LABEL'])):
         train_x, train_y = train_df[feats].iloc[train_idx], train_df['Y_LABEL'].iloc[train_idx]
@@ -191,7 +192,7 @@ def train_model_lgb_w_fs(train,test,params,stratified,num_folds,drop_features,se
 
     rst_list = []
     vi_list = []
-    for i in [176,1,2]:
+    for i in [176,1,2,3,4,5]:
         err, vi = sub_model(train,test,params,True,5,drop_features,seed_num=i)
         rst_list.append({'seed':i,'err':err})    
         vi_list.append(vi)
